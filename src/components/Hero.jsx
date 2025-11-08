@@ -1,12 +1,33 @@
-import Spline from '@splinetool/react-spline';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import { ArrowRight } from 'lucide-react';
 
+// Lazy-load Spline so the page doesn't crash if the package or scene fails
+const LazySpline = lazy(() => import('@splinetool/react-spline'));
+
 export default function Hero() {
+  const [splineOk, setSplineOk] = useState(true);
+
+  // If lazy import fails, show a graceful fallback
+  useEffect(() => {
+    // Preload attempt to catch errors early
+    import('@splinetool/react-spline').catch(() => setSplineOk(false));
+  }, []);
+
   return (
     <section id="home" className="relative min-h-[70vh] grid place-items-center overflow-hidden">
       <div className="absolute inset-0">
-        <Spline scene="https://prod.spline.design/6g1Ew2gQ0pV5ERg1/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+        {splineOk ? (
+          <Suspense fallback={<div className="h-full w-full bg-gradient-to-br from-indigo-50 via-white to-purple-50" />}>
+            <LazySpline
+              scene="https://prod.spline.design/6g1Ew2gQ0pV5ERg1/scene.splinecode"
+              style={{ width: '100%', height: '100%' }}
+            />
+          </Suspense>
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
+        )}
       </div>
+
       <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900">
           Seamless Online Admissions
@@ -30,6 +51,8 @@ export default function Hero() {
           </a>
         </div>
       </div>
+
+      {/* Make sure overlay doesn't block Spline interactions */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent" />
     </section>
   );
